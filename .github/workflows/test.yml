@@ -57,7 +57,7 @@ jobs:
           fqbn: ${{ matrix.board.fqbn }}
           libraries: ${{ env.LIBRARIES }}
           enable-deltas-report: 'true'
-          sketches-path: ${{ env.SKETCHES_PATH }}
+          sketch-paths: ${{ env.SKETCHES_PATH }}
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
       - name: Save memory usage change report as artifact
