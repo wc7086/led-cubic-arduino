@@ -1,15 +1,15 @@
-name: Compile Examples
+name: Compile test
 
 on:
   pull_request:
     paths:
-      - ".github/workflows/compile-examples.yml"
+      - ".github/workflows/test.yml"
       - "library.properties"
       - "examples/**"
       - "src/**"
   push:
     paths:
-      - ".github/workflows/compile-examples.yml"
+      - ".github/workflows/test.yml"
       - "library.properties"
       - "examples/**"
       - "src/**"
@@ -73,7 +73,7 @@ jobs:
         if: matrix.board.platform-name == 'esp32:esp32'
         run: pip3 install pyserial
 
-      - name: Compile examples
+      - name: Compile test
         uses: arduino/compile-sketches@v1
         with:
           platforms: ${{ matrix.platforms }}
