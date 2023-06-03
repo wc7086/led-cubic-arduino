@@ -1,9 +1,9 @@
+#include <ESPmDNS.h>
 #include <SPI.h>
-#include <esp32-hal-timer.h>
+#include <WebServer.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
+#include <esp32-hal-timer.h>
 
 #define MOSI 11
 #define SCK 13
@@ -16,7 +16,7 @@ char password[50];
 char hostname[50];
 
 // AP
-char ap_ssid[50] = { 'l', 'e', 'd', '-', 'c', 'u', 'b', 'i', 'c', '\0' };
+char ap_ssid[50] = {'l', 'e', 'd', '-', 'c', 'u', 'b', 'i', 'c', '\0'};
 char ap_password[50] = "";
 
 // Create an instance of the web server
@@ -26,16 +26,15 @@ int shift_out;
 byte anode[4];
 
 // 用于存储 LED 亮度
-byte  red0[8], red1[8], red2[8], red3[8];
-byte  blue0[8], blue1[8], blue2[8], blue3[8];
-byte  green0[8], green1[8], green2[8], green3[8];
+byte red0[8], red1[8], red2[8], red3[8];
+byte blue0[8], blue1[8], blue2[8], blue3[8];
+byte green0[8], green1[8], green2[8], green3[8];
 
+int level = 0;                 // 用于立方层数
+int anodelevel = 0;            // 用于层数步进
+int BAM_Bit, BAM_Counter = 0;  // 步数跟踪变量
 
-int level = 0; // 用于立方层数
-int anodelevel = 0; // 用于层数步进
-int BAM_Bit, BAM_Counter = 0; // 步数跟踪变量
-
-unsigned long start; // 用于毫秒计时器
+unsigned long start;  // 用于毫秒计时器
 
 hw_timer_t *timer = NULL;
 
@@ -50,7 +49,7 @@ void IRAM_ATTR refreshCube() {
 
   BAM_Counter++;
 
-  switch (BAM_Bit) { 
+  switch (BAM_Bit) {
     case 0:
       for (shift_out = level; shift_out < level + 2; shift_out++)
         SPI.transfer(red0[shift_out]);
@@ -82,7 +81,7 @@ void IRAM_ATTR refreshCube() {
         SPI.transfer(green3[shift_out]);
       for (shift_out = level; shift_out < level + 2; shift_out++)
         SPI.transfer(blue3[shift_out]);
-     
+
       if (BAM_Counter == 120) {
         BAM_Counter = 0;
         BAM_Bit = 0;
@@ -98,12 +97,10 @@ void IRAM_ATTR refreshCube() {
   digitalWrite(blank_pin, LOW);
 
   anodelevel++;
-  level = level + 2; 
+  level = level + 2;
 
-  if (anodelevel == 4)
-    anodelevel = 0;
-  if (level == 8) 
-    level = 0;
+  if (anodelevel == 4) anodelevel = 0;
+  if (level == 8) level = 0;
   pinMode(blank_pin, OUTPUT);
 }
 
@@ -120,33 +117,34 @@ void setup() {
     Serial.print("mDNS hostname: ");
     Serial.println("ledcubic");
   }
-  //MDNS.addService("http","tcp",80);
+  // MDNS.addService("http","tcp",80);
 
   // Serve the HTML page with the text box to modify net worth
   server.on("/", HTTP_GET, handleRoot);
 
   server.on("/", HTTP_POST, handleRoot);
 
-  // Define and assign the function that will be called when the text box is modified
-  //server.on("/", HTTP_POST, handleMoney);
+  // Define and assign the function that will be called when the text box is
+  // modified
+  // server.on("/", HTTP_POST, handleMoney);
 
   server.onNotFound(handleNotFound);
 
-  //server.sendHeader("Content-Type", "text/html; charset=utf-8");
+  // server.sendHeader("Content-Type", "text/html; charset=utf-8");
 
   // Start the web server
   server.begin();
   Serial.println("Web server start");
 
-  SPI.setBitOrder(MSBFIRST); // Most Significant Bit First
-  SPI.setDataMode(SPI_MODE0); // Mode 0 Rising edge of data, keep clock low
-  SPI.setClockDivider(SPI_CLOCK_DIV2); // Run the data in at 16MHz/2 - 8MHz
+  SPI.setBitOrder(MSBFIRST);   // Most Significant Bit First
+  SPI.setDataMode(SPI_MODE0);  // Mode 0 Rising edge of data, keep clock low
+  SPI.setClockDivider(SPI_CLOCK_DIV2);  // Run the data in at 16MHz/2 - 8MHz
 
   // 计时器1 用于刷新 LED 立方
-  timer = timerBegin(1, 80, true); // timer1, prescale = 80, count up
-  timerAttachInterrupt(timer, &refreshCube, true); // attach ISR
-  timerAlarmWrite(timer, 120, true); // set alarm value, autoreload = true
-  timerAlarmEnable(timer); // enable alarm
+  timer = timerBegin(1, 80, true);  // timer1, prescale = 80, count up
+  timerAttachInterrupt(timer, &refreshCube, true);  // attach ISR
+  timerAlarmWrite(timer, 120, true);  // set alarm value, autoreload = true
+  timerAlarmEnable(timer);            // enable alarm
 
   anode[0] = B00000001;
   anode[1] = B00000010;
@@ -165,19 +163,21 @@ void setup() {
 
 void loop() {
   server.handleClient();
-  //check();
-  //blinKing();
-  //movePlane();
-  //moveSingle();
-  //moveSqure();
-  //moveOnePixel();
-  //allLeds(); 
-  //planeSwipe();
-  //randomLeds();
+  // check();
+  // blinKing();
+  // movePlane();
+  // moveSingle();
+  // moveSqure();
+  // moveOnePixel();
+  // allLeds();
+  // planeSwipe();
+  // randomLeds();
 }
 
 void handleRoot() {
-  String message = "<html><head><meta charset='utf-8' name='viewport' content='width=device-width, initial-scale=1.0'>";
+  String message =
+      "<html><head><meta charset='utf-8' name='viewport' "
+      "content='width=device-width, initial-scale=1.0'>";
   message += "<style>";
   message += "html.dark {";
   message += "  background-color: #222;";
@@ -232,7 +232,9 @@ void handleRoot() {
   message += "</script>";
   message += "</head><body>";
   message += "<a href='/setting' class='page-toggle-left'>Settings</a>";
-  message += "<button class='theme-toggle theme-toggle-right' onclick='toggleTheme()'>切换主题</button>";
+  message +=
+      "<button class='theme-toggle theme-toggle-right' "
+      "onclick='toggleTheme()'>切换主题</button>";
   message += "<div style='text-align:center; padding-top:60px;'>";
   message += "<h1>LED 立方控制台</h1>";
   message += "<form method='POST' action='/'>";
@@ -249,7 +251,9 @@ void handleRoot() {
   message += "<option value='randomLeds'>炫彩</option>";
   message += "</select>";
   message += "<br><br>";
-  message += "<input style='display:block; margin:20px auto; font-size: 20px; padding: 10px 20px; text-align:center;' type='submit' value='提交'>";
+  message +=
+      "<input style='display:block; margin:20px auto; font-size: 20px; "
+      "padding: 10px 20px; text-align:center;' type='submit' value='提交'>";
   message += "</form>";
   message += "</div>";
 
@@ -279,9 +283,7 @@ void handleRoot() {
   server.send(200, "text/html", message);
 }
 
-void handleNotFound() {
-  server.send(404, "text/plain", "404: Not found");
-}
+void handleNotFound() { server.send(404, "text/plain", "404: Not found"); }
 
 // 自检
 void check() {
@@ -344,12 +346,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= (3 - i)) {
-        for (int k = 0; k < 4; k++)
-          LED(k, j, child, 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, j, child, 0, 15, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(k, j, child, 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, j, child, 0, 15, 0);
       }
     }
     delay(100);
@@ -359,12 +359,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= i) {
-        for (int k = 0; k < 4; k++)
-          LED(k, child, j , 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, child, j, 0, 15, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(k, child, j, 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, child, j, 0, 15, 0);
       }
     }
     delay(100);
@@ -374,12 +372,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= (3 - i)) {
-        for (int k = 0; k < 4; k++)
-          LED(k, child, j, 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, child, j, 0, 15, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(k, child, j, 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, child, j, 0, 15, 0);
       }
     }
     delay(100);
@@ -389,12 +385,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= i) {
-        for (int k = 0; k < 4; k++)
-          LED(k, j, child , 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, j, child, 0, 15, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(k, j, child, 0, 15, 0);
+        for (int k = 0; k < 4; k++) LED(k, j, child, 0, 15, 0);
       }
     }
     delay(100);
@@ -405,12 +399,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= (3 - i)) {
-        for (int k = 0; k < 4; k++)
-          LED(j, child, k,  0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(j, child, k, 0, 0, 15);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(j, child, k,   0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(j, child, k, 0, 0, 15);
       }
     }
     delay(100);
@@ -420,12 +412,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= i) {
-        for (int k = 0; k < 4; k++)
-          LED(child, j , k,  0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(child, j, k, 0, 0, 15);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(child, j, k , 0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(child, j, k, 0, 0, 15);
       }
     }
     delay(100);
@@ -435,12 +425,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= (3 - i)) {
-        for (int k = 0; k < 4; k++)
-          LED(child, j, k,   0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(child, j, k, 0, 0, 15);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED( child, j, k,  0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(child, j, k, 0, 0, 15);
       }
     }
     delay(100);
@@ -450,12 +438,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= i) {
-        for (int k = 0; k < 4; k++)
-          LED(j, child , k,  0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(j, child, k, 0, 0, 15);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(j, child, k, 0, 0, 15);
+        for (int k = 0; k < 4; k++) LED(j, child, k, 0, 0, 15);
       }
     }
     delay(100);
@@ -466,12 +452,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= (3 - i)) {
-        for (int k = 0; k < 4; k++)
-          LED(j, k, child,  15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(j, k, child, 15, 0, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(j, k, child,   15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(j, k, child, 15, 0, 0);
       }
     }
     delay(100);
@@ -481,12 +465,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= i) {
-        for (int k = 0; k < 4; k++)
-          LED(child, k, j ,  15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(child, k, j, 15, 0, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED(child, k , j, 15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(child, k, j, 15, 0, 0);
       }
     }
     delay(100);
@@ -496,12 +478,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= (3 - i)) {
-        for (int k = 0; k < 4; k++)
-          LED( child, k, j,  15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(child, k, j, 15, 0, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED( child, k, j,  15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(child, k, j, 15, 0, 0);
       }
     }
     delay(100);
@@ -511,12 +491,10 @@ void planeSwipe() {
     int child = 0;
     for (int j = 0; j < 4; j++) {
       if (j >= i) {
-        for (int k = 0; k < 4; k++)
-          LED(j , k, child,  15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(j, k, child, 15, 0, 0);
         child++;
       } else {
-        for (int k = 0; k < 4; k++)
-          LED( j, k, child, 15, 0, 0);
+        for (int k = 0; k < 4; k++) LED(j, k, child, 15, 0, 0);
       }
     }
     delay(100);
@@ -573,7 +551,7 @@ void moveOnePixel() {
     blue = random(16);
     LED(layer, column, row, red, green, blue);
     LED(column, layer, row, red, green, blue);
-    LED(row , layer, column ,  red, green, blue);
+    LED(row, layer, column, red, green, blue);
     delay(50);
     clean();
   }
@@ -589,32 +567,26 @@ void moveSqure() {
     int blue = random(15);
     LED(1, 1, 1, red, green, blue);
     LED(1, 1, 2, red, green, blue);
-    LED(1, 2, 1,  red, green, blue);
-    LED(1, 2, 2,  red, green, blue);
-    LED(2, 1, 1,  red, green, blue);
-    LED(2, 1, 2,  red, green, blue);
-    LED(2, 2, 1,  red, green, blue);
-    LED(2, 2, 2,  red, green, blue);
+    LED(1, 2, 1, red, green, blue);
+    LED(1, 2, 2, red, green, blue);
+    LED(2, 1, 1, red, green, blue);
+    LED(2, 1, 2, red, green, blue);
+    LED(2, 2, 1, red, green, blue);
+    LED(2, 2, 2, red, green, blue);
     delay(200);
     clean();
     for (int i = 0; i < 4; i++)
-      for (int j = 0; j < 4; j++)
-        LED(i, j, 0,  red, green, blue);
+      for (int j = 0; j < 4; j++) LED(i, j, 0, red, green, blue);
     for (int i = 0; i < 4; i++)
-      for (int j = 0; j < 4; j++)
-        LED(i, 0, j,  red, green, blue);
+      for (int j = 0; j < 4; j++) LED(i, 0, j, red, green, blue);
     for (int i = 0; i < 4; i++)
-      for (int j = 0; j < 4; j++)
-        LED(0, i, j,  red, green, blue);
+      for (int j = 0; j < 4; j++) LED(0, i, j, red, green, blue);
     for (int i = 0; i < 4; i++)
-      for (int j = 0; j < 4; j++)
-        LED(i, j, 3, red, green, blue);
+      for (int j = 0; j < 4; j++) LED(i, j, 3, red, green, blue);
     for (int i = 0; i < 4; i++)
-      for (int j = 0; j < 4; j++)
-        LED(i, 3, j, red, green, blue);
+      for (int j = 0; j < 4; j++) LED(i, 3, j, red, green, blue);
     for (int i = 0; i < 4; i++)
-      for (int j = 0; j < 4; j++)
-        LED(3, i, j, red, green, blue);
+      for (int j = 0; j < 4; j++) LED(3, i, j, red, green, blue);
 
     delay(200);
     clean();
@@ -701,6 +673,5 @@ void clean() {
   int ii, jj, kk;
   for (ii = 0; ii < 4; ii++)
     for (jj = 0; jj < 4; jj++)
-      for (kk = 0; kk < 4; kk++)
-        LED(ii, jj, kk, 0, 0, 0);
+      for (kk = 0; kk < 4; kk++) LED(ii, jj, kk, 0, 0, 0);
 }
