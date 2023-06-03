@@ -24,6 +24,10 @@ jobs:
       LIBRARIES: |
         # Install the Arduino_ConnectionHandler library from the repository
         - source-path: ./
+      ARDUINOCORE_MBED_STAGING_PATH: extras/ArduinoCore-mbed
+      ARDUINOCORE_API_STAGING_PATH: extras/ArduinoCore-API
+      SKETCHES_PATH: ./
+      SKETCHES_REPORTS_PATH: sketches-reports
     strategy:
       matrix:
         board:
@@ -53,9 +57,13 @@ jobs:
           fqbn: ${{ matrix.board.fqbn }}
           libraries: ${{ env.LIBRARIES }}
           enable-deltas-report: 'true'
+          sketches-path: ${{ env.SKETCHES_PATH }}
+          sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
       - name: Save memory usage change report as artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
+          name: ${{ env.SKETCHES_REPORTS_PATH }}
+          path: ${{ env.SKETCHES_REPORTS_PATH }}
