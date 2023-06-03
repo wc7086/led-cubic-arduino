@@ -21,11 +21,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      LIBRARIES: |
-        # Install the Arduino_ConnectionHandler library from the repository
-        - source-path: ./
-      ARDUINOCORE_MBED_STAGING_PATH: extras/ArduinoCore-mbed
-      ARDUINOCORE_API_STAGING_PATH: extras/ArduinoCore-API
       SKETCHES_PATH: ./
       SKETCHES_REPORTS_PATH: sketches-reports
     strategy:
